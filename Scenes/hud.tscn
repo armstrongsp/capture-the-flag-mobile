@@ -1,0 +1,112 @@
+[gd_scene load_steps=14 format=3 uid="uid://bj0auubyu4e06"]
+
+[ext_resource type="Script" path="res://Scenes/hud.gd" id="1_27qrh"]
+[ext_resource type="Texture2D" uid="uid://bm5he4gykstds" path="res://Assets/Players/Bar_Container.png" id="2_n2ehb"]
+[ext_resource type="Texture2D" uid="uid://dwbv0ih64yei1" path="res://Assets/Players/Bar_Movement.png" id="3_jma3n"]
+[ext_resource type="Texture2D" uid="uid://i85wumulyps8" path="res://Assets/Players/Bar_Vision.png" id="4_attqp"]
+[ext_resource type="Texture2D" uid="uid://ct3aufd7pg763" path="res://Assets/Players/Bar_Strength.png" id="5_ow38a"]
+[ext_resource type="Texture2D" uid="uid://c4km6djbbcoy0" path="res://Assets/Players/Bar_Stealth.png" id="6_8e30l"]
+[ext_resource type="Texture2D" uid="uid://dbmchbf3saj4a" path="res://Assets/Buttons/Stance_Scouting.png" id="7_twjr3"]
+[ext_resource type="Texture2D" uid="uid://8x4vyv7hxxyl" path="res://Assets/Buttons/Stance_Running.png" id="9_4a4ds"]
+[ext_resource type="Texture2D" uid="uid://mwjbfyedrv2l" path="res://Assets/Buttons/Stance_Walking.png" id="10_teun7"]
+[ext_resource type="Texture2D" uid="uid://la58v3rjbtnh" path="res://Assets/Buttons/Stance_Crawling.png" id="11_r27o7"]
+[ext_resource type="Texture2D" uid="uid://b0pkift6qwnau" path="res://Assets/Buttons/SelectedBox.png" id="12_pobw0"]
+[ext_resource type="Texture2D" uid="uid://c03bx234ejrqp" path="res://Assets/Buttons/Stance_Prone.png" id="12_s0312"]
+
+[sub_resource type="Theme" id="Theme_kv4dx"]
+
+[node name="HUD" type="CanvasLayer"]
+script = ExtResource("1_27qrh")
+
+[node name="PlayerPanel" type="Panel" parent="."]
+offset_right = 60.0
+offset_bottom = 46.0
+
+[node name="MovementContainer" type="Sprite2D" parent="PlayerPanel"]
+position = Vector2(30, 8)
+scale = Vector2(3.0625, 0.375)
+texture = ExtResource("2_n2ehb")
+
+[node name="MovementBar" type="Sprite2D" parent="PlayerPanel/MovementContainer"]
+position = Vector2(-7.67347, -5.33333)
+scale = Vector2(0.959184, 0.696)
+texture = ExtResource("3_jma3n")
+centered = false
+
+[node name="VisionContainer" type="Sprite2D" parent="PlayerPanel"]
+position = Vector2(30, 18)
+scale = Vector2(3.0625, 0.375)
+texture = ExtResource("2_n2ehb")
+
+[node name="VisionBar" type="Sprite2D" parent="PlayerPanel/VisionContainer"]
+position = Vector2(-7.673, -5.333)
+scale = Vector2(0.959184, 0.696)
+texture = ExtResource("4_attqp")
+centered = false
+
+[node name="StrengthContainer" type="Sprite2D" parent="PlayerPanel"]
+position = Vector2(30, 28)
+scale = Vector2(3.0625, 0.375)
+texture = ExtResource("2_n2ehb")
+
+[node name="StrengthBar" type="Sprite2D" parent="PlayerPanel/StrengthContainer"]
+position = Vector2(-7.673, -5.333)
+scale = Vector2(0.959184, 0.696)
+texture = ExtResource("5_ow38a")
+centered = false
+
+[node name="StealthContainer" type="Sprite2D" parent="PlayerPanel"]
+position = Vector2(30, 38)
+scale = Vector2(3.0625, 0.375)
+texture = ExtResource("2_n2ehb")
+
+[node name="StealthBar" type="Sprite2D" parent="PlayerPanel/StealthContainer"]
+position = Vector2(-7.673, -5.333)
+scale = Vector2(0.959184, 0.696)
+texture = ExtResource("6_8e30l")
+centered = false
+
+[node name="SaveButton" type="Button" parent="."]
+offset_top = 47.0
+offset_right = 60.0
+offset_bottom = 78.0
+text = "Save"
+
+[node name="LoadButton" type="Button" parent="."]
+offset_left = 1.0
+offset_top = 79.0
+offset_right = 60.0
+offset_bottom = 110.0
+theme = SubResource("Theme_kv4dx")
+text = "Load"
+
+[node name="Stance_Scouting" type="Sprite2D" parent="."]
+position = Vector2(67, 4)
+texture = ExtResource("7_twjr3")
+offset = Vector2(16, 16)
+
+[node name="Stance_Running" type="Sprite2D" parent="."]
+position = Vector2(104, 4)
+texture = ExtResource("9_4a4ds")
+offset = Vector2(16, 16)
+
+[node name="Stance_Walking" type="Sprite2D" parent="."]
+position = Vector2(141, 4)
+texture = ExtResource("10_teun7")
+offset = Vector2(16, 16)
+
+[node name="Stance_Crawling" type="Sprite2D" parent="."]
+position = Vector2(176, 4)
+texture = ExtResource("11_r27o7")
+offset = Vector2(16, 16)
+
+[node name="Stance_Prone" type="Sprite2D" parent="."]
+position = Vector2(212, 4)
+texture = ExtResource("12_s0312")
+offset = Vector2(16, 16)
+
+[node name="Stance_Selected" type="Sprite2D" parent="."]
+visible = false
+position = Vector2(83, 20)
+texture = ExtResource("12_pobw0")
+offset = Vector2(16, 16)

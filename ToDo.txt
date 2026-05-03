@@ -1,0 +1,22 @@
+x	add something to block movement around border
+x	add path finding to movement (start -> dest click)
+	set up proper tiles
+	set up proper player images
+	create a decent looking level
+	add second team
+x	add center line
+	come up with a conflict mechanic
+x	make stance buttons update when selecting player
+	add flag to each side
+	create screen overlay
+	add turns for each side (when run out of movement, end turn)
+	add enemy AI
+x	add player animations
+x	add player stances with vision modifiers
+	add "seeing" other team players
+	add sounds
+	add background music
+
+
+
+
