@@ -32,3 +32,10 @@ func _input(event):
 	
 func make_active_camera() -> void:
 	$Camera2D.make_current()
+
+func setup_limits(map_width_px: int, map_height_px: int) -> void:
+	const PADDING := 5 * 32
+	$Camera2D.limit_left   = -PADDING
+	$Camera2D.limit_top    = -PADDING
+	$Camera2D.limit_right  = map_width_px  + PADDING
+	$Camera2D.limit_bottom = map_height_px + PADDING

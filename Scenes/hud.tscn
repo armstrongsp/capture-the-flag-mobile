@@ -112,11 +112,15 @@ texture = ExtResource("12_pobw0")
 offset = Vector2(16, 16)
 
 [node name="EndTurnButton" type="Button" parent="."]
-position = Vector2(60, 2)
+offset_left = 60.0
+offset_top = 2.0
 offset_right = 60.0
 offset_bottom = 14.0
 text = "End Turn"
 
 [node name="TurnLabel" type="Label" parent="."]
-position = Vector2(140, 2)
+offset_left = 140.0
+offset_top = 2.0
+offset_right = 140.0
+offset_bottom = 2.0
 text = "Team 1's Turn"

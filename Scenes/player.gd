@@ -8,7 +8,11 @@ const BASE_MOVE_SPEED := 200
 @export var visible_cells: BitMap
 
 #player stats
-@export var max_vision_range : int = 15
+@export var max_vision_range : int = 15 :
+	set(value):
+		max_vision_range = value
+		visible_cells = BitMap.new()
+		visible_cells.create(Vector2i(value * 3, value * 3))
 @export var max_movement_range : int = 500
 @export var max_strength : int = 100
 @export var max_stealth : int = 100
@@ -21,7 +25,7 @@ var cur_path: Array[Vector2]
 
 func _init() -> void:
 	visible_cells = BitMap.new()
-	visible_cells.create(Vector2i(max_vision_range * 2, max_vision_range * 2))
+	visible_cells.create(Vector2i(max_vision_range * 3, max_vision_range * 3))
 
 func _physics_process(delta: float) -> void:
 	if not is_selected:
@@ -103,21 +107,35 @@ func set_stance(new_stance: Globals.Stance) -> void:
 	SignalBus.player_moved.emit(position)
 	
 func update_visible_cells() -> void:
-	for x in range(0, max_vision_range * 2):
-		for y in range(0, max_vision_range * 2):
+	var bitmap_size = max_vision_range * 3
+	var center = bitmap_size / 2
+	for x in range(0, bitmap_size):
+		for y in range(0, bitmap_size):
 			visible_cells.set_bit(x, y, false)
-	
+
+	var parent = get_parent()
+	var player_cell_x = int(position.x / Globals.CELL_SIZE)
+	var player_cell_y = int(position.y / Globals.CELL_SIZE)
+	var player_terrain_vision = parent.map_vision_metadata[player_cell_x][player_cell_y]
+	# negative Vision_Reduce means "mountain" — grants 1.5x vision range
+	var effective_range = int(max_vision_range * 1.5) if player_terrain_vision < 0 else max_vision_range
+
 	for angle in range(0, 360, 2):
-		var range_remaining = max_vision_range	
-		for dist in range(0, max_vision_range):
+		var range_remaining = effective_range
+		for dist in range(0, effective_range):
 			var destOffset = Vector2(cos(angle * PI / 180), sin(angle * PI / 180)) * dist
-			var check_pos = (position / Globals.CELL_SIZE) + destOffset
-			var cell_vision_subtract = self.get_parent().map_vision_metadata[check_pos.x][check_pos.y]
-			
-			range_remaining -= int(float(cell_vision_subtract) * Globals.StanceMods[stance].vision)
-			
+			var check_x = player_cell_x + int(destOffset.x)
+			var check_y = player_cell_y + int(destOffset.y)
+			if check_x < 0 or check_x >= parent.MapSize.x or check_y < 0 or check_y >= parent.MapSize.y:
+				break
+			var cell_vision = parent.map_vision_metadata[check_x][check_y]
+			if cell_vision < 0:
+				cell_vision = 0  # mountains don't block LOS when looking through them
+			range_remaining -= int(float(cell_vision) * Globals.StanceMods[stance].vision)
 			if range_remaining <= 0:
 				break
-			else:
-				visible_cells.set_bit(destOffset.x + max_vision_range, destOffset.y + max_vision_range, true)
+			var bit_x = int(destOffset.x) + center
+			var bit_y = int(destOffset.y) + center
+			if bit_x >= 0 and bit_x < bitmap_size and bit_y >= 0 and bit_y < bitmap_size:
+				visible_cells.set_bit(bit_x, bit_y, true)
 			

@@ -27,11 +27,19 @@ func _ready() -> void:
 	SignalBus.map_save.connect(_on_map_save)
 	SignalBus.map_load.connect(_on_map_load)
 	SignalBus.turn_end.connect(end_turn)
+	_setup_black_fog_shader()
 
-	if FileAccess.file_exists("user://default.map"):
-		SignalBus.map_load.emit("default.map")
-	else:
-		_initialize_new_game()
+	#if FileAccess.file_exists("user://default.map"):
+	#	SignalBus.map_load.emit("default.map")
+	#else:
+	_initialize_new_game()
+
+func _setup_black_fog_shader() -> void:
+	var shader = Shader.new()
+	shader.code = "shader_type canvas_item;\nvoid fragment() { COLOR = vec4(0.0, 0.0, 0.0, 1.0); }"
+	var mat = ShaderMaterial.new()
+	mat.shader = shader
+	$FogOfWar.material = mat
 
 func _initialize_new_game() -> void:
 	build_map()
@@ -40,6 +48,7 @@ func _initialize_new_game() -> void:
 	_setup_hud()
 	update_map_metadata()
 	_initialize_fog_states()
+	_initialize_player_visibility()
 	update_fog_layer()
 	update_pathfinding_data()
 
@@ -67,17 +76,47 @@ func _generate_terrain_blobs(terrain_index: int, num_blobs: int, min_radius: flo
 				if nx <= 0 or nx >= MapSize.x - 1 or ny <= 0 or ny >= MapSize.y - 1:
 					continue
 				var dist = sqrt(float(dx * dx + dy * dy))
-				var probability = clampf(1.0 - (dist / radius) + rng.randf_range(-0.2, 0.2), 0.0, 1.0)
+				var t = clampf(dist / radius, 0.0, 1.0)
+				var probability = clampf(1.0 - (t * t) + rng.randf_range(-0.08, 0.08), 0.0, 1.0)
 				if rng.randf() < probability:
 					var pos = Vector2i(nx, ny)
 					var existing = $GroundFeatures.get_cell_tile_data(pos)
-					if existing:
-						var mv = existing.get_custom_data("Movement_Reduce")
-						if mv in priority_skip:
-							continue
+					if existing and existing.terrain in priority_skip:
+						continue
 					cells.append(pos)
 		if cells.size() > 0:
 			$GroundFeatures.set_cells_terrain_connect(cells, 0, terrain_index)
+
+func _generate_water_blobs(num_blobs: int, min_radius: float, max_radius: float) -> void:
+	for _i in num_blobs:
+		var cx = rng.randi_range(1, MapSize.x - 2)
+		var cy = rng.randi_range(1, MapSize.y - 2)
+		var base_radius = rng.randf_range(min_radius, max_radius)
+		var freq1 = rng.randf_range(2.0, 5.0)
+		var freq2 = rng.randf_range(2.0, 4.0)
+		var phase1 = rng.randf_range(0.0, TAU)
+		var phase2 = rng.randf_range(0.0, TAU)
+		var amp = rng.randf_range(0.08, 0.18)
+		var cells: Array[Vector2i] = []
+		var ir = int(ceil(base_radius * 1.25))
+		for dx in range(-ir, ir + 1):
+			for dy in range(-ir, ir + 1):
+				var nx = cx + dx
+				var ny = cy + dy
+				if nx <= 0 or nx >= MapSize.x - 1 or ny <= 0 or ny >= MapSize.y - 1:
+					continue
+				var dist = sqrt(float(dx * dx + dy * dy))
+				var angle = atan2(float(dy), float(dx))
+				var effective_radius = base_radius * (1.0 + amp * (sin(angle * freq1 + phase1) + cos(angle * freq2 + phase2)) * 0.5)
+				if dist <= effective_radius:
+					var pos = Vector2i(nx, ny)
+					var existing = $GroundFeatures.get_cell_tile_data(pos)
+					if existing:
+						if existing.get_custom_data("Movement_Reduce") >= 1000:
+							continue
+					cells.append(pos)
+		if cells.size() > 0:
+			$GroundFeatures.set_cells_terrain_connect(cells, 0, terrain_source_water)
 
 func build_map() -> void:
 	for x in MapSize.x:
@@ -97,10 +136,10 @@ func build_map() -> void:
 		border_cells.append(Vector2i(MapSize.x - 1, y))
 	$GroundFeatures.set_cells_terrain_connect(border_cells, 0, terrain_source_fence)
 
-	_generate_terrain_blobs(terrain_source_water, rng.randi_range(6, 10), 2.0, 8.0, [])
-	_generate_terrain_blobs(terrain_source_mountain, rng.randi_range(5, 9), 3.0, 9.0, [1000])
-	_generate_terrain_blobs(terrain_source_trees, rng.randi_range(12, 18), 2.0, 7.0, [1000])
-	_generate_terrain_blobs(terrain_source_tallgrass, rng.randi_range(18, 25), 1.5, 4.0, [1000])
+	_generate_water_blobs(rng.randi_range(3, 5), 3.0, 12.0)
+	_generate_terrain_blobs(terrain_source_trees, rng.randi_range(88, 125), 3.0, 15.0, [terrain_source_fence, terrain_source_water])
+	_generate_terrain_blobs(terrain_source_tallgrass, rng.randi_range(50, 70), 2.0, 10.0, [terrain_source_fence, terrain_source_water, terrain_source_trees])
+	_generate_terrain_blobs(terrain_source_mountain, rng.randi_range(12, 20), 4.0, 20.0, [terrain_source_fence, terrain_source_water, terrain_source_trees, terrain_source_tallgrass])
 
 func build_players() -> void:
 	var team1_x = 95 * Globals.CELL_SIZE
@@ -142,6 +181,7 @@ func create_player(team:int, id:int,x: float, y:float, vision:int, movement:int,
 	var player = preload("res://Scenes/player.tscn")
 	var instance = player.instantiate()
 	add_child(instance)
+	instance.get_node("Camera").setup_limits(MapSize.x * Globals.CELL_SIZE, MapSize.y * Globals.CELL_SIZE)
 	instance.team_id = team
 	instance.player_id = id
 	instance.position.x = x
@@ -200,12 +240,13 @@ func update_fog_layer() -> void:
 
 	for player in get_children():
 		if player.scene_file_path.contains("player.tscn") and player.team_id == active_team:
+			var half = player.visible_cells.get_size().x / 2
 			for x in range(player.visible_cells.get_size().x):
 				for y in range(player.visible_cells.get_size().y):
 					if player.visible_cells.get_bit(x, y):
 						var cell_offset = Vector2i(
-							int(player.position.x / Globals.CELL_SIZE) + x - player.max_vision_range,
-							int(player.position.y / Globals.CELL_SIZE) + y - player.max_vision_range
+							int(player.position.x / Globals.CELL_SIZE) + x - half,
+							int(player.position.y / Globals.CELL_SIZE) + y - half
 						)
 						if cell_offset.x >= 0 and cell_offset.x < MapSize.x and cell_offset.y >= 0 and cell_offset.y < MapSize.y:
 							fog_state[cell_offset.x][cell_offset.y] = 3
@@ -245,6 +286,11 @@ func _initialize_fog_states() -> void:
 		for y in range(MapSize.y):
 			fog_state_team1[x][y] = 2 if x < center else 1
 			fog_state_team2[x][y] = 2 if x > center else 1
+
+func _initialize_player_visibility() -> void:
+	for player in get_children():
+		if player.scene_file_path.contains("player.tscn"):
+			player.update_visible_cells()
 
 func update_map_metadata() -> void:
 	map_vision_metadata.clear()

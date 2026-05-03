@@ -1,13 +1,32 @@
+Create a decent looking level: 
+Level should be 201 cells wide and 100 cells tall with the center line going vertically down the center of the map. The map should contain a randomized set of terrain that uses small to large globs of the different train types (trees, mountains, water, tall grass) in an organization that would make sense in real life. There should also be a set of impassible fence tiles all the way around the edge of the map. It is 100% okay for globs of terrain to cross between the sides of the map. The whole map should look like one cohesive set of terrain.
+
+Add second team: 
+The second team should consist of 5 players. They should also have randomized stats just like the existing team. They should be spawned on the right side of the map, 5 cells from the center line and evenly spaced vertically down the map. The first team players should have their positions updated to be the same but 5 cells to the left of the centerline.
+
+Add flag to each side: 
+A new entity called a "flag" should be added. Each team will get 1 flag randomly spawned somewhere in the 25% of the map furthest from he centerline. Each team always be able to see their own flag.
+
+Add turn taking mechanic:
+The game will be played in turns, starting with team 1 which will be the team on the left side of the map. The player will be allowed to move their characters around in any order they would like. As long as the characters have movement points left they will be allowed to keep taking their turn. When all of the movement points have been used the player will need to end their turn so the second player can take their turn. The player may also choose to end their turn early by using an "End turn" button at the top center of the screen. There should be an indicator in the top right of the screen that indicates which team's turn it currently is.
+
+Control fog of war per team:
+There will be 3 states for each tile on the map when it comes to fog-of-war. 1: blacked out. Player cannot see what the tile looks like at all, cell will be completely black. 2. Revealed, but not currently visible. In this state the player should be able to see the tile type, but it should have a grayed out look. The player should not be able to see characters from the enemy team on cells in this state. 3. Fully visible. In this state the player should be able to fully see the tile including if any characters from the enemy player occupy the cell.
+When the game starts, each teams side of the map will be set to state 2 (visible but fogged over). Then cells will be set to visible based on the current visibility logic. As the player moves their characters around, the visibility of the cells will be adjusted. When a character "sees" a cell that uses to be in state 1 (blacked out) it will be added to the list of cells that the player can see. If the character moves out of visible range of the cell it will end up in state 2 (visible but fogged over). In other words, once a call has been seen, it cannot return to a blacked out state. When the active team switched between players the visibility of the map should be adjusted to match the current team. Each team will have it's own hidden/exposed/visible set of map data.
+
+	
+
+
+
+Ignore everything past this line, these tasks have not been defined yet
+--------------------------------------------------------------------
+	come up with a conflict mechanic
 x	add something to block movement around border
 x	add path finding to movement (start -> dest click)
-	set up proper tiles
-	set up proper player images
-	create a decent looking level
-	add second team
+x	set up proper tiles
+x	set up proper player images
 x	add center line
-	come up with a conflict mechanic
 x	make stance buttons update when selecting player
-	add flag to each side
 	create screen overlay
 	add turns for each side (when run out of movement, end turn)
 	add enemy AI
