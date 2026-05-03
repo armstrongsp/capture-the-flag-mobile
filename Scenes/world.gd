@@ -97,12 +97,20 @@ func build_map() -> void:
 	_generate_terrain_blobs(terrain_source_tallgrass, rng.randi_range(18, 25), 1.5, 4.0, [1000])
 
 func build_players() -> void:
+	var team1_x = 95 * Globals.CELL_SIZE
+	var team2_x = 105 * Globals.CELL_SIZE
 	for i in Globals.PlayersPerTeam:
+		var y_pixel = int((float(i + 1) / float(Globals.PlayersPerTeam + 1)) * MapSize.y) * Globals.CELL_SIZE
 		var vis = int(Globals.Max_Vision * rng.randf_range(0.2, 1))
 		var mov = int(Globals.Max_Movement * rng.randf_range(0.2, 1))
 		var str = int(Globals.Max_Strength * rng.randf_range(0.2, 1))
 		var slth = int(Globals.Max_Stealth * rng.randf_range(0.2, 1))
-		create_player(1, i + 1, rng.randf_range(300, 500), rng.randf_range(300, 500), vis, mov, str, slth)
+		create_player(1, i + 1, team1_x, y_pixel, vis, mov, str, slth)
+		vis = int(Globals.Max_Vision * rng.randf_range(0.2, 1))
+		mov = int(Globals.Max_Movement * rng.randf_range(0.2, 1))
+		str = int(Globals.Max_Strength * rng.randf_range(0.2, 1))
+		slth = int(Globals.Max_Stealth * rng.randf_range(0.2, 1))
+		create_player(2, i + 6, team2_x, y_pixel, vis, mov, str, slth)
 
 func create_player(team:int, id:int,x: float, y:float, vision:int, movement:int, strength: int, stealth:int) -> void:
 	var player = preload("res://Scenes/player.tscn")
