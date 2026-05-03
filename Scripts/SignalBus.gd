@@ -7,3 +7,6 @@ signal player_set_stance(stance:Globals.Stance)
 
 signal map_save()
 signal map_load(filename:String)
+
+signal turn_end()
+signal turn_changed(team_id: int)

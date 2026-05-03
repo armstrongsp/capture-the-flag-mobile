@@ -64,7 +64,6 @@ func _physics_process(delta: float) -> void:
 func _on_input_event(viewport: Node, event: InputEvent, shape_idx: int) -> void:
 	if event.is_action_released("select"):
 		is_selected = true
-		movement_points_remaining = max_movement_range
 		SignalBus.player_selected.emit(player_id)
 		SignalBus.player_set_stance.emit(stance)
 		trigger_stats_update()

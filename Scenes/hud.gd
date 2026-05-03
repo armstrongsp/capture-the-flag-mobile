@@ -18,8 +18,9 @@ func _ready() -> void:
 	
 	$SaveButton.pressed.connect(_on_save_clicked)
 	$LoadButton.pressed.connect(_on_load_clicked)
-	
+	$EndTurnButton.pressed.connect(_on_end_turn_pressed)
 	SignalBus.player_set_stance.connect(_on_player_stance_updated)
+	SignalBus.turn_changed.connect(_on_turn_changed)
 
 	
 func _physics_process(delta: float) -> void:
@@ -55,6 +56,12 @@ func _on_save_clicked() -> void:
 	
 func _on_load_clicked() -> void:
 	SignalBus.map_load.emit("default.map")
+
+func _on_end_turn_pressed() -> void:
+	SignalBus.turn_end.emit()
+
+func _on_turn_changed(team_id: int) -> void:
+	$TurnLabel.text = "Team " + str(team_id) + "'s Turn"
 	
 func _on_player_stance_updated(stance:Globals.Stance) -> void:
 	var selected_sprite = $Stance_Scouting

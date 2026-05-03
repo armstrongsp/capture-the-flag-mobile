@@ -15,6 +15,7 @@ const terrain_source_centerline := 1
 var rng = RandomNumberGenerator.new()
 var current_player_id = 0
 var pathfinding = AStarGrid2D.new()
+var active_team := 1
 
 func _ready() -> void:
 	SignalBus.player_selected.connect(_on_player_selected)
@@ -23,6 +24,7 @@ func _ready() -> void:
 	SignalBus.player_set_stance.connect(_on_player_stance_updated)
 	SignalBus.map_save.connect(_on_map_save)
 	SignalBus.map_load.connect(_on_map_load)
+	SignalBus.turn_end.connect(end_turn)
 
 	if FileAccess.file_exists("user://default.map"):
 		SignalBus.map_load.emit("default.map")
@@ -124,6 +126,7 @@ func create_player(team:int, id:int,x: float, y:float, vision:int, movement:int,
 	instance.max_movement_range = movement
 	instance.max_strength = strength
 	instance.max_stealth = stealth
+	instance.movement_points_remaining = movement
 
 func get_current_player_object() -> Node:
 	for player in self.get_children():
@@ -209,14 +212,37 @@ func get_movement_path(source: Vector2i, dest: Vector2i) -> Array[Vector2]:
 	return path_as_points
 
 func _on_player_selected(player_id: int) -> void:
+	for player in get_children():
+		if player.scene_file_path.contains("player.tscn") and player.player_id == player_id:
+			if player.team_id != active_team:
+				player.deselect_player()
+				return
 	current_player_id = player_id
-	for player in self.get_children():
+	for player in get_children():
 		if player.scene_file_path.contains("player.tscn"):
 			if player.player_id != player_id:
 				player.deselect_player()
 
 func _on_player_moved(pos: Vector2) -> void:
 	update_fog_layer()
+	_check_auto_end_turn()
+
+func _check_auto_end_turn() -> void:
+	for player in get_children():
+		if player.scene_file_path.contains("player.tscn"):
+			if player.team_id == active_team and player.movement_points_remaining > 0:
+				return
+	end_turn()
+
+func end_turn() -> void:
+	active_team = 2 if active_team == 1 else 1
+	for player in get_children():
+		if player.scene_file_path.contains("player.tscn"):
+			if player.team_id == active_team:
+				player.movement_points_remaining = player.max_movement_range
+			player.deselect_player()
+	current_player_id = 0
+	SignalBus.turn_changed.emit(active_team)
 
 func _on_player_stats_updated(vision:float, movement:float, strength:float, stealth:float) -> void:
 	$HUD.vision = vision

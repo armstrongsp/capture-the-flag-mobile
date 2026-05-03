@@ -110,3 +110,13 @@ visible = false
 position = Vector2(83, 20)
 texture = ExtResource("12_pobw0")
 offset = Vector2(16, 16)
+
+[node name="EndTurnButton" type="Button" parent="."]
+position = Vector2(60, 2)
+offset_right = 60.0
+offset_bottom = 14.0
+text = "End Turn"
+
+[node name="TurnLabel" type="Label" parent="."]
+position = Vector2(140, 2)
+text = "Team 1's Turn"
