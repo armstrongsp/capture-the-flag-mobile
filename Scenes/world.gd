@@ -34,6 +34,7 @@ func _ready() -> void:
 func _initialize_new_game() -> void:
 	build_map()
 	build_players()
+	build_flags()
 	_setup_hud()
 	update_map_metadata()
 	update_fog_layer()
@@ -114,6 +115,26 @@ func build_players() -> void:
 		slth = int(Globals.Max_Stealth * rng.randf_range(0.2, 1))
 		create_player(2, i + 6, team2_x, y_pixel, vis, mov, str, slth)
 
+func build_flags() -> void:
+	_spawn_flag(1, 1, 24)
+	_spawn_flag(2, 176, 199)
+
+func _spawn_flag(team: int, x_min: int, x_max: int) -> void:
+	var flag_scene = preload("res://Scenes/flag.tscn")
+	for _attempt in 100:
+		var cx = rng.randi_range(x_min, x_max)
+		var cy = rng.randi_range(1, MapSize.y - 2)
+		var cell_data = $GroundFeatures.get_cell_tile_data(Vector2i(cx, cy))
+		if cell_data:
+			var mv = cell_data.get_custom_data("Movement_Reduce")
+			if mv >= 1000:
+				continue
+		var flag = flag_scene.instantiate()
+		flag.team_id = team
+		flag.position = Vector2(cx * Globals.CELL_SIZE, cy * Globals.CELL_SIZE)
+		add_child(flag)
+		return
+
 func create_player(team:int, id:int,x: float, y:float, vision:int, movement:int, strength: int, stealth:int) -> void:
 	var player = preload("res://Scenes/player.tscn")
 	var instance = player.instantiate()
@@ -178,6 +199,12 @@ func update_fog_layer() -> void:
 					if (player.visible_cells.get_bit(x, y)):
 						var posOffset = Vector2(x - player.max_vision_range, y - player.max_vision_range)
 						$FogOfWar.erase_cell((player.position / Globals.CELL_SIZE) + posOffset)
+
+	for child in get_children():
+		if child.scene_file_path.contains("flag.tscn"):
+			if child.team_id == active_team:
+				var flag_cell = child.position / Globals.CELL_SIZE
+				$FogOfWar.erase_cell(flag_cell)
 
 func update_map_metadata() -> void:
 	map_vision_metadata.clear()
@@ -289,11 +316,20 @@ func map_data_save() -> void:
 				"stealth" : player.max_stealth
 			})
 
+	var flag_data = []
+	for child in get_children():
+		if child.scene_file_path.contains("flag.tscn"):
+			flag_data.append({
+				"team": child.team_id,
+				"x": child.position.x,
+				"y": child.position.y
+			})
 	var map_data = {
 		"width": MapSize.x,
 		"height": MapSize.y,
 		"tiles": terrain_data,
-		"players": player_data
+		"players": player_data,
+		"flags": flag_data
 	}
 	var output_file = FileAccess.open_encrypted_with_pass("user://default.map", FileAccess.WRITE, Globals.map_file_password)
 	var map_data_json = JSON.stringify(map_data)
@@ -320,6 +356,14 @@ func map_data_load(filename: String) -> void:
 
 	for p in map_data.players:
 		create_player(p.team, p.id, p.x, p.y, p.vision, p.movement, p.strength, p.stealth)
+
+	if map_data.has("flags"):
+		for f in map_data.flags:
+			var flag_scene = preload("res://Scenes/flag.tscn")
+			var flag = flag_scene.instantiate()
+			flag.team_id = f.team
+			flag.position = Vector2(f.x, f.y)
+			add_child(flag)
 
 	_setup_hud()
 	update_map_metadata()

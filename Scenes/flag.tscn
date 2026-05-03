@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://flag_scene_001"]
+
+[ext_resource type="Script" path="res://Scenes/flag.gd" id="1_flag01"]
+
+[node name="Flag" type="Node2D"]
+z_index = 60
+script = ExtResource("1_flag01")
