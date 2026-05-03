@@ -735,6 +735,12 @@ sources/1 = SubResource("TileSetAtlasSource_1g41y")
 [node name="Everything" type="Node2D"]
 script = ExtResource("1_be2xj")
 
+[node name="FogOfWar2" type="TileMapLayer" parent="."]
+z_index = 99
+modulate = Color(0.5, 0.5, 0.5, 0.7)
+tile_set = SubResource("TileSet_1ahkd")
+collision_enabled = false
+
 [node name="FogOfWar" type="TileMapLayer" parent="."]
 z_index = 100
 tile_set = SubResource("TileSet_1ahkd")

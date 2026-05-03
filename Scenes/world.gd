@@ -16,6 +16,8 @@ var rng = RandomNumberGenerator.new()
 var current_player_id = 0
 var pathfinding = AStarGrid2D.new()
 var active_team := 1
+var fog_state_team1: Array = []
+var fog_state_team2: Array = []
 
 func _ready() -> void:
 	SignalBus.player_selected.connect(_on_player_selected)
@@ -37,6 +39,7 @@ func _initialize_new_game() -> void:
 	build_flags()
 	_setup_hud()
 	update_map_metadata()
+	_initialize_fog_states()
 	update_fog_layer()
 	update_pathfinding_data()
 
@@ -188,23 +191,60 @@ func update_pathfinding_data():
 		pathfinding.set_point_solid(Vector2i(MapSize.x - 1, y), true)
 
 func update_fog_layer() -> void:
+	var fog_state = fog_state_team1 if active_team == 1 else fog_state_team2
+
 	for x in range(MapSize.x):
 		for y in range(MapSize.y):
-			$FogOfWar.set_cell(Vector2i(x, y), 1, Vector2i(0, 0), 0)
+			if fog_state[x][y] == 3:
+				fog_state[x][y] = 2
 
-	for player in self.get_children():
-		if player.scene_file_path.contains("player.tscn"):
+	for player in get_children():
+		if player.scene_file_path.contains("player.tscn") and player.team_id == active_team:
 			for x in range(player.visible_cells.get_size().x):
 				for y in range(player.visible_cells.get_size().y):
-					if (player.visible_cells.get_bit(x, y)):
-						var posOffset = Vector2(x - player.max_vision_range, y - player.max_vision_range)
-						$FogOfWar.erase_cell((player.position / Globals.CELL_SIZE) + posOffset)
+					if player.visible_cells.get_bit(x, y):
+						var cell_offset = Vector2i(
+							int(player.position.x / Globals.CELL_SIZE) + x - player.max_vision_range,
+							int(player.position.y / Globals.CELL_SIZE) + y - player.max_vision_range
+						)
+						if cell_offset.x >= 0 and cell_offset.x < MapSize.x and cell_offset.y >= 0 and cell_offset.y < MapSize.y:
+							fog_state[cell_offset.x][cell_offset.y] = 3
 
 	for child in get_children():
-		if child.scene_file_path.contains("flag.tscn"):
-			if child.team_id == active_team:
-				var flag_cell = child.position / Globals.CELL_SIZE
-				$FogOfWar.erase_cell(flag_cell)
+		if child.scene_file_path.contains("flag.tscn") and child.team_id == active_team:
+			var fx = int(child.position.x / Globals.CELL_SIZE)
+			var fy = int(child.position.y / Globals.CELL_SIZE)
+			if fx >= 0 and fx < MapSize.x and fy >= 0 and fy < MapSize.y:
+				fog_state[fx][fy] = 3
+
+	for x in range(MapSize.x):
+		for y in range(MapSize.y):
+			var cell = Vector2i(x, y)
+			var state = fog_state[x][y]
+			if state == 1:
+				$FogOfWar.set_cell(cell, 1, Vector2i(0, 0), 0)
+				$FogOfWar2.erase_cell(cell)
+			elif state == 2:
+				$FogOfWar.erase_cell(cell)
+				$FogOfWar2.set_cell(cell, 1, Vector2i(0, 0), 0)
+			else:
+				$FogOfWar.erase_cell(cell)
+				$FogOfWar2.erase_cell(cell)
+
+func _initialize_fog_states() -> void:
+	fog_state_team1.clear()
+	fog_state_team1.resize(MapSize.x)
+	fog_state_team2.clear()
+	fog_state_team2.resize(MapSize.x)
+	var center = int(MapSize.x / 2)
+	for x in range(MapSize.x):
+		fog_state_team1[x] = []
+		fog_state_team1[x].resize(MapSize.y)
+		fog_state_team2[x] = []
+		fog_state_team2[x].resize(MapSize.y)
+		for y in range(MapSize.y):
+			fog_state_team1[x][y] = 2 if x < center else 1
+			fog_state_team2[x][y] = 2 if x > center else 1
 
 func update_map_metadata() -> void:
 	map_vision_metadata.clear()
@@ -270,6 +310,7 @@ func end_turn() -> void:
 			player.deselect_player()
 	current_player_id = 0
 	SignalBus.turn_changed.emit(active_team)
+	update_fog_layer()
 
 func _on_player_stats_updated(vision:float, movement:float, strength:float, stealth:float) -> void:
 	$HUD.vision = vision
@@ -329,7 +370,9 @@ func map_data_save() -> void:
 		"height": MapSize.y,
 		"tiles": terrain_data,
 		"players": player_data,
-		"flags": flag_data
+		"flags": flag_data,
+		"fog1": fog_state_team1,
+		"fog2": fog_state_team2,
 	}
 	var output_file = FileAccess.open_encrypted_with_pass("user://default.map", FileAccess.WRITE, Globals.map_file_password)
 	var map_data_json = JSON.stringify(map_data)
@@ -367,5 +410,10 @@ func map_data_load(filename: String) -> void:
 
 	_setup_hud()
 	update_map_metadata()
+	_initialize_fog_states()
+	if map_data.has("fog1"):
+		fog_state_team1 = map_data.fog1
+	if map_data.has("fog2"):
+		fog_state_team2 = map_data.fog2
 	update_fog_layer()
 	update_pathfinding_data()
